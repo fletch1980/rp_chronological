@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chronological Bible — Bible Study Hub</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a1a; font-family: system-ui, sans-serif; min-height: 100vh; padding: 20px 16px 60px; color: white; }
+
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; color: #fbbf24; font-size: 13px; text-decoration: none; margin-bottom: 20px; }
+    .back-btn:hover { color: white; }
+
+    .plan-header { text-align: center; margin-bottom: 24px; }
+    .plan-header .icon { font-size: 40px; margin-bottom: 8px; }
+    .plan-header h1 { font-size: 22px; font-weight: 900; }
+    .plan-header p { font-size: 13px; color: #9ca3af; margin-top: 4px; }
+    .progress-wrap { margin: 14px auto 0; max-width: 320px; }
+    .progress-track { background: rgba(255,255,255,0.1); border-radius: 20px; height: 6px; }
+    .progress-fill { height: 6px; border-radius: 20px; background: #f59e0b; transition: width 0.4s; }
+    .progress-label { font-size: 11px; color: #6b7280; margin-top: 5px; text-align: center; }
+
+    .notes-btn { width: 100%; margin-bottom: 14px; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+    .notes-btn:hover { background: rgba(245,158,11,0.15); border-color: #f59e0b55; }
+
+    .day-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: background 0.15s; }
+    .day-item:hover { background: rgba(245,158,11,0.1); }
+    .day-item.done { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.25); }
+    .check-circle { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #d97706; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .day-item.done .check-circle { background: #22c55e; border-color: #22c55e; }
+    .day-info { flex: 1; min-width: 0; }
+    .day-num { font-size: 10px; color: #6b7280; }
+    .day-passage { font-size: 14px; font-weight: 700; }
+    .day-item.done .day-passage { text-decoration: line-through; color: rgba(255,255,255,0.35); }
+    .day-title { font-size: 11px; color: #fbbf24; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .note-badge { font-size: 10px; color: #6b7280; background: rgba(245,158,11,0.2); border-radius: 20px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0; }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .day-header { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+    .day-header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .day-header-meta { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+    .day-header-title { font-size: 20px; font-weight: 900; }
+    .day-header-passage { font-size: 13px; color: #fbbf24; margin-top: 2px; }
+    .done-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; border: 1.5px solid #d97706; color: #fbbf24; background: transparent; cursor: pointer; white-space: nowrap; flex-shrink: 0; margin-left: 10px; }
+    .done-btn.is-done { background: #22c55e; border-color: #22c55e; color: white; }
+    .day-focus { font-size: 13px; color: #fef3c7; line-height: 1.6; margin-top: 12px; }
+
+    .section-card { border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+    .section-card.teaching  { background: rgba(180,83,9,0.2); border: 1px solid rgba(245,158,11,0.3); }
+    .section-card.verses    { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+    .section-card.questions { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+    .section-card.notes     { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+    .section-card.ai        { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fbbf24; margin-bottom: 12px; }
+    .teaching-para { font-size: 13px; color: rgba(255,255,255,0.88); line-height: 1.7; margin-bottom: 10px; }
+    .teaching-para:last-child { margin-bottom: 0; }
+    .verse-item { background: rgba(245,158,11,0.12); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; color: #fef3c7; font-style: italic; line-height: 1.5; }
+    .verse-item:last-child { margin-bottom: 0; }
+    .question-item { display: flex; gap: 10px; margin-bottom: 10px; }
+    .question-item:last-child { margin-bottom: 0; }
+    .q-num { width: 22px; height: 22px; border-radius: 50%; background: #d97706; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-top: 1px; }
+    .q-text { font-size: 13px; color: #fef3c7; line-height: 1.6; }
+
+    .note-entry { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+    .note-text { font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6; }
+    .note-meta { font-size: 10px; color: #6b7280; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .note-delete { background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 0; }
+    .confirm-delete { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 8px 10px; margin-top: 6px; display: flex; align-items: center; gap: 8px; }
+    .confirm-delete span { font-size: 12px; color: #fca5a5; flex: 1; }
+    .confirm-yes { background: #ef4444; border: none; border-radius: 6px; color: white; font-size: 11px; font-weight: 700; padding: 4px 10px; cursor: pointer; }
+    .confirm-no  { background: rgba(255,255,255,0.08); border: none; border-radius: 6px; color: #9ca3af; font-size: 11px; padding: 4px 10px; cursor: pointer; }
+    textarea { width: 100%; background: rgba(10,10,26,0.8); border: 1px solid rgba(245,158,11,0.4); border-radius: 10px; padding: 12px; font-size: 13px; color: white; font-family: system-ui, sans-serif; resize: none; outline: none; margin-top: 4px; }
+    textarea:focus { border-color: #f59e0b; }
+    .save-note-btn { width: 100%; margin-top: 8px; padding: 10px; background: #d97706; border: none; border-radius: 10px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .save-note-btn:hover { background: #f59e0b; }
+
+    .ai-btn { padding: 6px 14px; background: #d97706; border: none; border-radius: 20px; color: white; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .ai-btn:disabled { opacity: 0.5; cursor: default; }
+    .ai-result { font-size: 13px; color: #fef3c7; line-height: 1.7; margin-top: 10px; }
+    .ai-placeholder { font-size: 13px; color: #4b5563; font-style: italic; }
+
+    .history-entry { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+    .history-day-link { font-size: 11px; color: #fbbf24; font-weight: 700; cursor: pointer; margin-bottom: 6px; }
+    .history-day-link:hover { color: white; }
+    .history-note-text { font-size: 13px; color: rgba(255,255,255,0.88); line-height: 1.6; }
+    .history-note-date { font-size: 10px; color: #6b7280; margin-top: 4px; }
+
+    .day-nav { display: flex; gap: 10px; margin-top: 4px; }
+    .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .nav-prev { background: rgba(255,255,255,0.08); color: #9ca3af; }
+    .nav-prev:hover { background: rgba(255,255,255,0.12); }
+    .nav-next { background: #d97706; color: white; }
+    .nav-next:hover { background: #f59e0b; }
+
+    .empty-state { text-align: center; color: #4b5563; padding: 40px 0; font-size: 13px; }
+    .empty-state .e-icon { font-size: 36px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<!-- LIST VIEW -->
+<div id="viewList" class="view active">
+  <a class="back-btn" href="../index.html">← Bible Study Hub</a>
+  <div class="plan-header">
+    <div class="icon">📖</div>
+    <h1>Chronological Bible</h1>
+    <p>Read the entire Bible in the order events actually happened</p>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-label" id="progressLabel">0 / 28 days completed</div>
+    </div>
+  </div>
+  <button class="notes-btn" onclick="showHistory()">
+    <span>📝 Notes History</span>
+    <span id="notesCount" style="font-size:11px;color:#6b7280;">0 notes ›</span>
+  </button>
+  <div id="dayList"></div>
+</div>
+
+<!-- DAY VIEW -->
+<div id="viewDay" class="view">
+  <a class="back-btn" href="#" onclick="showList();return false;">← All Days</a>
+  <div class="day-header">
+    <div class="day-header-top">
+      <div>
+        <div class="day-header-meta" id="dayMeta"></div>
+        <div class="day-header-title" id="dayTitle"></div>
+        <div class="day-header-passage" id="dayPassage"></div>
+      </div>
+      <button class="done-btn" id="doneBtn" onclick="toggleDone()"></button>
+    </div>
+    <div class="day-focus" id="dayFocus"></div>
+  </div>
+  <div class="section-card teaching">
+    <div class="section-label">📖 Teaching</div>
+    <div id="dayTeaching"></div>
+  </div>
+  <div class="section-card verses">
+    <div class="section-label">🔑 Key Verses</div>
+    <div id="dayVerses"></div>
+  </div>
+  <div class="section-card questions">
+    <div class="section-label">🤔 Study Questions</div>
+    <div id="dayQuestions"></div>
+  </div>
+  <div class="section-card notes">
+    <div class="section-label">✍️ My Notes</div>
+    <div id="notesList"></div>
+    <textarea id="noteInput" rows="3" placeholder="Write your thoughts, answers, or what God is showing you..."></textarea>
+    <button class="save-note-btn" onclick="saveNote()">Save Note</button>
+  </div>
+  <div class="section-card ai">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div class="section-label" style="margin-bottom:0;">✨ Deeper AI Insight</div>
+      <button class="ai-btn" id="aiBtn" onclick="getInsight()">Get Insight</button>
+    </div>
+    <div id="aiResult"><div class="ai-placeholder">Tap "Get Insight" for cross-references, historical context & extra commentary.</div></div>
+  </div>
+  <div class="day-nav">
+    <button class="nav-btn nav-prev" id="prevBtn" onclick="navDay(-1)">← Previous</button>
+    <button class="nav-btn nav-next" id="nextBtn" onclick="navDay(1)">Next Day →</button>
+  </div>
+</div>
+
+<!-- HISTORY VIEW -->
+<div id="viewHistory" class="view">
+  <a class="back-btn" href="#" onclick="showList();return false;">← All Days</a>
+  <h2 style="font-size:18px;font-weight:900;margin-bottom:4px;">📝 Notes History</h2>
+  <p style="font-size:12px;color:#6b7280;margin-bottom:18px;" id="historySubtitle"></p>
+  <div id="historyList"></div>
+</div>
+
+<script>
+var PLAN = {
+  name: "Chronological Bible",
+  storageKey: "chronological-plan-v1",
+  days: [
+    {day:1,passage:"Genesis 1–2",title:"In the Beginning",focus:"God creates everything out of nothing. He forms man in His own image and breathes life into him personally.",teaching:"Genesis 1 is a theological declaration before it is a scientific one. The repeated phrase 'God saw that it was good' appears 7 times — God delights in what He makes. Day 7 is the only day God blesses — rest is sacred, not laziness.\n\nGenesis 2 zooms in on Day 6. God forms man from dust and breathes life into him personally — no other creature receives this. Woman is made from man's rib — not his feet (to be walked on) or his head (to rule over him), but his side — to be beside him as an equal.\n\nThe word 'image' (Hebrew: tselem) was used of statues representing kings. You are a living statue of God — placed in His creation to represent Him.",keyVerses:["Genesis 1:1 — In the beginning God created the heavens and the earth.","Genesis 1:27 — So God created mankind in his own image, in the image of God he created them.","Genesis 2:7 — Then the LORD God formed a man from the dust of the ground and breathed into his nostrils the breath of life."],questions:["What does it mean to be made 'in the image of God' — how should that change how you see yourself and others?","Why do you think God rested on the 7th day — what is He modeling for us?","God personally breathed life into Adam. How does knowing God formed you personally change how you approach Him?"]},
+    {day:2,passage:"Genesis 3–4",title:"The Fall and First Murder",focus:"Satan deceives Eve, Adam follows, and sin enters the world. Cain murders Abel — evil escalates immediately.",teaching:"Genesis 3 is the most consequential chapter after Genesis 1. Everything broken in the world — death, shame, pain, fractured relationships — traces back here. God's first question to Adam is 'Where are you?' — not because He doesn't know, but to give Adam a chance to confess.\n\nEven in judgment, God shows grace: He kills an animal (the first death in Scripture) to make clothing for Adam and Eve. Blood covers shame. This pattern points all the way to the cross.\n\nGenesis 4: Cain's story shows sin unchecked escalates. God warns him before the murder: 'sin is crouching at the door; it desires to have you, but you must rule over it' (4:7). Cain ignores the warning. God hears Abel's blood cry out — He hears injustice even when no one sees it.",keyVerses:["Genesis 3:15 — I will put enmity between you and the woman... he will crush your head.","Genesis 3:21 — The LORD God made garments of skin for Adam and his wife and clothed them.","Genesis 4:7 — Sin is crouching at the door; it desires to have you, but you must rule over it."],questions:["Genesis 3:15 is called the 'first gospel' — what does it promise, and how does it point to Jesus?","Where do you see God's mercy inside His judgment in chapter 3?","What was Cain's warning, and what does it say about how sin works in our own lives?"]},
+    {day:3,passage:"Genesis 6–8",title:"Noah and the Flood",focus:"Humanity's evil reaches a breaking point. God grieves over His creation. Noah finds grace — and the world gets a new beginning.",teaching:"The flood is not just a story about water — it is about judgment and salvation happening simultaneously. The same water that destroys the wicked lifts the ark. God's judgment and His salvation cannot be separated.\n\nGod doesn't command Noah to build the ark the day before the flood — He gives him over 100 years. God is patient and deliberate in saving. Note that God shuts the door, not Noah (7:16).\n\nAfter the flood, God makes His first formal covenant with all living creatures. The rainbow is not just beautiful — it is God's sworn promise. Every rainbow since has been God repeating: 'I keep my word.'",keyVerses:["Genesis 6:8 — But Noah found favor (grace) in the eyes of the LORD.","Genesis 7:16 — Then the LORD shut him in.","Genesis 9:13 — I have set my rainbow in the clouds, and it will be the sign of the covenant between me and the earth."],questions:["What does it mean that God 'grieved' that He made humanity (6:6)? Can God grieve?","God shut the ark door — not Noah. What does that teach us about salvation?","What does the first covenant teach you about God's character and how He keeps His word?"]},
+    {day:4,passage:"Genesis 11–12",title:"Babel and the Call of Abram",focus:"Humanity unites in pride at Babel. God scatters them — then immediately calls one man, Abram, to become the solution to the world's sin problem.",teaching:"Babel (Genesis 11) is humanity's greatest achievement — and God considers it dangerous. Their sin isn't just building a tower; it's 'making a name for themselves' — refusing to spread across the earth as God commanded, and asserting independence from God.\n\nImmediately in Genesis 12, God begins His rescue plan. He calls Abram — an idol worshipper from Ur — and makes 7 promises: land, nation, great name, blessing, blessing to others, cursing enemies, all peoples blessed through him.\n\nThat last promise is the gospel in seed form. Paul quotes Genesis 12:3 in Galatians 3:8 and says it was the gospel preached in advance.",keyVerses:["Genesis 11:4 — Let us build a city... so that we may make a name for ourselves.","Genesis 12:1 — Go from your country... to the land I will show you.","Genesis 12:3 — All peoples on earth will be blessed through you."],questions:["What was the real sin at Babel — was it the tower itself, or something deeper?","God called Abram before he was righteous. What does that tell you about how God chooses people?","How does 'all peoples blessed through Abram' ultimately connect to Jesus and the gospel?"]},
+    {day:5,passage:"Genesis 15; 17",title:"God's Covenant with Abraham",focus:"God makes a binding covenant with Abraham — promising land, descendants, and a future. Then He seals it with circumcision as a sign.",teaching:"Genesis 15 contains one of the most dramatic scenes in the Bible. God makes a covenant using the ancient ceremony of 'cutting covenant' — animals are split in two and the parties walk between them, saying 'may this happen to me if I break this promise.' But only God passes through — as a smoking firepot and flaming torch — while Abraham sleeps. God takes full responsibility for keeping both sides of the covenant. This is pure grace.\n\nGenesis 17 introduces circumcision as the sign of the covenant. Abram ('exalted father') becomes Abraham ('father of many nations'). God often renames people when He gives them a new identity and calling.\n\nThese covenant passages are the backbone of the entire Bible. Every promise God makes to Israel, and ultimately to us through Christ, flows from what He commits to here.",keyVerses:["Genesis 15:6 — Abram believed the LORD, and he credited it to him as righteousness.","Genesis 15:17 — A smoking firepot with a blazing torch appeared and passed between the pieces.","Genesis 17:7 — I will establish my covenant as an everlasting covenant between me and you."],questions:["Genesis 15:6 is quoted three times in the New Testament. Why is it so important that Abraham's faith — not his works — was credited as righteousness?","God walked through the covenant alone while Abraham slept. What does that tell you about the nature of God's promises?","What 'new name' or new identity has God given you since you came to faith?"]},
+    {day:6,passage:"Genesis 22",title:"The Greatest Test",focus:"God commands Abraham to sacrifice his only son Isaac. This is the most dramatic event in Genesis — and the richest picture of the gospel in the entire Old Testament.",teaching:"Genesis 22 is called the Akedah (the Binding) in Jewish tradition, read every year on Rosh Hashanah as the most important test a human being ever faced.\n\nKey details: God provides a ram caught in the thicket as a substitute — Isaac is spared. Abraham names the place 'The LORD Will Provide.' The New Testament sees this as a direct picture of the Father giving His own Son. God did what He asked Abraham to do — He did not spare His own Son (Romans 8:32).\n\nIsaac carrying wood up the mountain = Jesus carrying His cross. The ram caught in thorns = Jesus wearing a crown of thorns. Father and son walking together = God and Jesus going to the cross together. No detail in this story is accidental.",keyVerses:["Genesis 22:2 — Take your son, your only son, whom you love — Isaac.","Genesis 22:8 — God himself will provide the lamb for the burnt offering, my son.","Genesis 22:14 — On the mountain of the LORD it will be provided."],questions:["Hebrews 11:19 says Abraham believed God could raise Isaac from the dead. How does that change the story for you?","Walk through the parallels between Isaac and Jesus. What does each detail teach you about the cross?","Has God ever asked you to release something you treasured deeply? What did that cost you — and what did it produce?"]},
+    {day:7,passage:"Genesis 37; 39–41",title:"Joseph — Betrayed and Exalted",focus:"Joseph is sold into slavery by his own brothers, falsely accused, and imprisoned. Then in one day, God elevates him to second-in-command of Egypt.",teaching:"Joseph's story is one of the longest in Genesis — 14 chapters — because it is a masterclass in God's sovereignty over human suffering. Every disaster in Joseph's life is used by God to position him for his purpose.\n\nGenesis 37: Joseph is his father's favorite — given the famous coat. His brothers' jealousy turns murderous. They sell him for 20 pieces of silver (Judas sold Jesus for 30).\n\nGenesis 39: 'The LORD was with Joseph' appears repeatedly even in prison. Presence is God's greatest gift — not comfort or success.\n\nGenesis 41: Pharaoh dreams. Joseph interprets. In a single day he goes from prison to palace. God's timing is sudden after years of waiting.",keyVerses:["Genesis 39:2 — The LORD was with Joseph so that he prospered.","Genesis 39:21 — The LORD was with him; he showed him kindness and granted him favor.","Genesis 41:39–40 — Since God has made all this known to you, there is no one so discerning and wise as you."],questions:["'The LORD was with Joseph' — even in prison. Where in your life do you need to believe that right now?","Joseph did the right thing with Potiphar's wife and was punished for it. How do you handle doing right when it costs you?","Joseph waited years in prison before his sudden promotion. What is the hardest part of waiting on God's timing?"]},
+    {day:8,passage:"Genesis 45; 50",title:"Joseph's Forgiveness",focus:"Joseph reveals himself to his brothers and forgives them. Then at their father's death, he speaks one of the most powerful statements of faith in all of Scripture.",teaching:"Genesis 45: Joseph can no longer control his emotions. He clears the room and weeps so loudly the Egyptians can hear him — then reveals himself to the brothers who sold him. He does not condemn them. He reframes the whole story: 'God sent me ahead of you to preserve life' (45:5).\n\nGenesis 50: After Jacob dies, the brothers panic — now Joseph will surely take revenge. Joseph's response is one of the greatest statements in the Bible: 'You intended to harm me, but God intended it for good to accomplish what is now being done, the saving of many lives' (50:20).\n\nThis is not toxic positivity — Joseph really suffered. It is theological vision: the ability to see God's redemptive purpose running through even the worst of human evil. This is what Paul means in Romans 8:28.",keyVerses:["Genesis 45:5 — Do not be distressed or angry with yourselves for selling me here, because it was to save lives that God sent me ahead of you.","Genesis 50:20 — You intended to harm me, but God intended it for good.","Genesis 50:21 — So then, don't be afraid. I will provide for you and your children."],questions:["Joseph said 'God sent me' — not 'you sold me.' How hard is it to see God's hand in your pain rather than only the person who hurt you?","Is there someone in your life you need to forgive for something that genuinely harmed you?","How does Joseph's story help you trust God with situations that seem hopeless or unjust right now?"]},
+    {day:9,passage:"Exodus 1–4",title:"Moses — The Burning Bush",focus:"Israel suffers under Egyptian slavery. God hears their cries and calls Moses from a burning bush — sending a reluctant deliverer.",teaching:"Exodus 1: 400 years have passed since Joseph. A new Pharaoh 'who did not know Joseph' enslaves Israel. The more they were oppressed, the more they multiplied (1:12). God's people often grow most under pressure.\n\nExodus 3: The burning bush is a theophany — a visible appearance of God. The bush burns but is not consumed: Israel is in the fire of suffering, but God will not let them be destroyed. God says 'I have heard... I have seen... I am concerned... I have come down' (3:7–8). God is not distant from suffering.\n\nMoses gives 5 objections to his calling: Who am I? Who are you? What if they don't believe me? I can't speak well. Please send someone else. God answers every one. His excuses don't disqualify him — God works through weakness.",keyVerses:["Exodus 3:7 — I have indeed seen the misery of my people. I have heard them crying out.","Exodus 3:14 — God said to Moses, 'I AM WHO I AM.'","Exodus 4:12 — Now go; I will help you speak and will teach you what to say."],questions:["God said 'I have seen, I have heard, I am concerned' — how does that encourage you about your own suffering?","Moses gave 5 excuses. What excuses do you use to avoid what God is calling you to?","God revealed His name as 'I AM.' What does that name tell us about God's nature and His relationship to time?"]},
+    {day:10,passage:"Exodus 12–14",title:"The Passover and the Red Sea",focus:"God strikes Egypt with the final plague. Israel is saved by the blood of the lamb. Then God parts the Red Sea — the greatest rescue in the Old Testament.",teaching:"The Passover (Exodus 12) is the foundational event of the entire Old Testament. A lamb is killed, its blood applied to the doorposts, and the angel of death passes over. Paul calls Jesus 'our Passover lamb' (1 Corinthians 5:7). The Last Supper was a Passover meal — Jesus was transforming the feast around Himself.\n\nThe Red Sea crossing (Exodus 14) is the OT's greatest miracle. Israel is trapped — sea in front, Pharaoh's army behind. God says: 'Stand firm and you will see the deliverance the LORD will bring you today' (14:13). The impossible opens up.\n\nThe same water that saves Israel drowns Pharaoh's army. Paul uses this in 1 Corinthians 10:1–2 as a picture of baptism — passing through water from slavery to freedom.",keyVerses:["Exodus 12:13 — When I see the blood, I will pass over you.","Exodus 14:13 — Do not be afraid. Stand firm and you will see the deliverance the LORD will bring you today.","Exodus 14:21 — Moses stretched out his hand over the sea, and all that night the LORD drove the sea back."],questions:["The blood on the doorposts saved Israel — not their goodness or effort. How does that picture apply to salvation through Jesus?","Israel was trapped with no way out — then God made a way. When have you been in an impossible situation where God came through?","After the Red Sea, Israel sang (Exodus 15). When is the last time you stopped and praised God for a specific deliverance in your life?"]},
+    {day:11,passage:"Exodus 19–20",title:"The Ten Commandments",focus:"God descends on Mount Sinai in fire and thunder. He gives Israel the Ten Commandments — the moral foundation of the covenant.",teaching:"Before God gives the law, He gives the gospel: 'I am the LORD your God, who brought you out of Egypt, out of the land of slavery' (20:2). The commandments are not the way to be saved — they are the response of a people already saved. Grace comes before law.\n\nThe Ten Commandments divide into two tables: the first four concern our relationship with God (no other gods, no idols, don't misuse God's name, keep the Sabbath), and the last six concern our relationship with people (honor parents, no murder, no adultery, no stealing, no false witness, no coveting).\n\nJesus summarized the whole law in two commands: love God (commandments 1–4) and love your neighbor (commandments 5–10). The law was never meant to save — it was meant to reveal our need for a Savior (Romans 3:20).",keyVerses:["Exodus 20:2 — I am the LORD your God, who brought you out of Egypt, out of the land of slavery.","Exodus 20:3 — You shall have no other gods before me.","Exodus 20:12 — Honor your father and your mother."],questions:["God gives grace before law — 'I rescued you, now here's how to live.' How does that change how you think about obeying God?","Which of the Ten Commandments do you find hardest to keep — and why?","Jesus said the greatest commandment is to love God with everything. What would that actually look like in your life this week?"]},
+    {day:12,passage:"Exodus 32–34",title:"The Golden Calf and God's Glory",focus:"Israel worships a golden calf 40 days after receiving the law. Moses intercedes. God renews the covenant — and reveals His glory to Moses.",teaching:"The golden calf (Exodus 32) is one of the most shocking events in the Bible. Israel has just heard God's voice from the mountain and promised to obey — then builds an idol in 40 days. This reveals the depth of human sin and the weakness of law alone to change the heart.\n\nMoses intercedes (32:11–14): he argues with God, appealing to God's reputation among the nations and His promises to Abraham. God relents. This is one of the most extraordinary prayers in Scripture — Moses stands in the gap.\n\nExodus 34:6–7 is the most quoted verse in the entire OT (referenced over 30 times): 'The LORD, the LORD, the compassionate and gracious God, slow to anger, abounding in love and faithfulness.' When God defines Himself, He leads with mercy.",keyVerses:["Exodus 32:14 — Then the LORD relented and did not bring on his people the disaster he had threatened.","Exodus 34:6–7 — The LORD, the LORD, the compassionate and gracious God, slow to anger, abounding in love and faithfulness.","Exodus 33:11 — The LORD would speak to Moses face to face, as one speaks to a friend."],questions:["Israel sinned with an idol days after meeting God. How quickly do we turn to our own 'golden calves' — things we trust instead of God?","Moses argued with God in prayer. What does that tell you about how honest and bold you can be in your own prayers?","God defines Himself as 'slow to anger, abounding in love.' How does that description compare with how you tend to picture God?"]},
+    {day:13,passage:"Numbers 13–14",title:"The Spies and Unbelief",focus:"Twelve spies enter Canaan. Ten come back with fear; two come back with faith. Israel's unbelief costs them 40 years in the wilderness.",teaching:"The twelve spies all saw the same land and the same giants. Ten said 'we cannot do it' — two said 'we certainly can' (Caleb and Joshua). The difference was not what they saw, but who they believed God was.\n\nThe ten spies said: 'We seemed like grasshoppers in our own eyes, and we looked the same to them' (13:33). Their self-image determined their faith level.\n\nIsrael's punishment is severe — 40 years wandering, one year for each day the spies explored. Hebrews 3–4 uses this story as a warning: unbelief is not just weakness — it is rebellion against God.",keyVerses:["Numbers 13:30 — Then Caleb silenced the people before Moses and said, 'We should go up and take possession of the land, for we can certainly do it.'","Numbers 14:11 — How long will they refuse to believe in me, in spite of all the signs I have performed among them?","Numbers 14:24 — But because my servant Caleb has a different spirit and follows me wholeheartedly, I will bring him into the land."],questions:["The spies saw themselves as grasshoppers. What 'giant' in your life makes you feel small — and what would faith look like in that situation?","Caleb had 'a different spirit.' What made him different — and how do you cultivate that kind of faith?","The New Testament warns against the same unbelief. What promised land might you be wandering around instead of entering?"]},
+    {day:14,passage:"Joshua 1–2; 6",title:"Crossing into the Promised Land",focus:"Joshua leads Israel into Canaan. Rahab shelters the spies. The walls of Jericho fall — not by military might but by obedience and faith.",teaching:"Joshua 1: God speaks to Joshua four times: 'Be strong and courageous.' Courage is not the absence of fear — it is obedience in the presence of fear. The promise: 'I will never leave you nor forsake you' (1:5). This is quoted in Hebrews 13:5 and applied to every believer.\n\nRahab (Joshua 2) is a Canaanite prostitute who hides the spies and declares: 'I know that the LORD has given you this land.' She had heard the stories and believed. Her scarlet cord hung in the window — a picture of the blood that saves. She ends up in the genealogy of Jesus (Matthew 1:5).\n\nJericho (Joshua 6): God's battle plan makes no military sense — march around the walls silently for 6 days, then shout on day 7. It is designed to make clear that the victory is God's, not Israel's.",keyVerses:["Joshua 1:9 — Be strong and courageous. Do not be afraid; do not be discouraged, for the LORD your God will be with you wherever you go.","Joshua 2:11 — The LORD your God is God in heaven above and on the earth below.","Joshua 6:20 — When the trumpets sounded, the army shouted, and at the sound of the trumpet, the wall collapsed."],questions:["God told Joshua to 'be strong and courageous' four times. What does that tell you about what Joshua was actually feeling?","Rahab believed based on stories she heard about God. What stories of God's faithfulness have shaped your own faith?","The Jericho battle plan was humiliating by human standards. When has God asked you to do something that didn't make sense — and what happened?"]},
+    {day:15,passage:"Ruth 1–4",title:"Ruth — Loyalty and Redemption",focus:"A Moabite widow follows her mother-in-law to Israel. She is redeemed by Boaz — a picture of Christ as our kinsman-redeemer.",teaching:"Ruth is one of only two books in the Bible named after a woman. It is set during the dark period of the Judges and shines like a light of faithfulness and hesed (covenant love).\n\nRuth 1:16–17 — Ruth's declaration to Naomi — is one of the most beautiful expressions of loyalty in Scripture: 'Where you go I will go, and where you stay I will stay. Your people will be my people and your God my God.' She was speaking to a bitter, broken woman with nothing to offer. She chose her anyway.\n\nBoaz is a 'kinsman-redeemer' (Hebrew: goel) — a relative with the legal right and responsibility to rescue a family member in distress. This is a direct picture of Jesus: He became our relative (took on flesh) and paid the price to redeem us.",keyVerses:["Ruth 1:16 — Where you go I will go, and where you stay I will stay. Your people will be my people and your God my God.","Ruth 2:12 — May you be richly rewarded by the LORD, the God of Israel, under whose wings you have come to take refuge.","Ruth 4:14 — Praise be to the LORD, who this day has not left you without a kinsman-redeemer."],questions:["Ruth chose loyalty to Naomi when it cost her everything. Who in your life needs that kind of committed, costly love from you?","Boaz noticed Ruth and showed her grace before she asked. When have you experienced undeserved kindness — from God or someone else?","Ruth was a Gentile outsider welcomed into God's family. How does that encourage you about who belongs in God's kingdom?"]},
+    {day:16,passage:"1 Samuel 16–17",title:"David — The Shepherd King and Goliath",focus:"God chooses David — the youngest, smallest son — as Israel's king. Then a teenage shepherd defeats a giant that terrified an entire army.",teaching:"1 Samuel 16: God sends Samuel to anoint one of Jesse's sons as king. Seven impressive sons pass before Samuel. God stops him each time: 'The LORD does not look at the things people look at. People look at the outward appearance, but the LORD looks at the heart' (16:7). The eighth son — the one left watching sheep — is God's choice.\n\nGoliath (chapter 17) is not primarily a story about courage — it is a story about who God is. David's confidence is not self-confidence: 'You come against me with sword and spear, but I come against you in the name of the LORD Almighty' (17:45). The battle belongs to the LORD.\n\nDavid ran toward Goliath while everyone else ran away. Faith does not eliminate fear — it redirects it toward God.",keyVerses:["1 Samuel 16:7 — People look at the outward appearance, but the LORD looks at the heart.","1 Samuel 17:45 — I come against you in the name of the LORD Almighty, the God of the armies of Israel.","1 Samuel 17:47 — The battle is the LORD's, and he will give all of you into our hands."],questions:["God looks at the heart, not outward appearance. What does God see when He looks at your heart right now?","David said 'the battle is the LORD's.' What battle in your life do you need to hand over to God rather than fight in your own strength?","David had experience with lions and bears before Goliath. What past 'small victories' with God has He used to prepare you for bigger challenges?"]},
+    {day:17,passage:"2 Samuel 11–12",title:"David's Great Sin",focus:"The greatest king in Israel's history commits adultery and murder. The prophet Nathan confronts him. David's repentance is raw and real.",teaching:"2 Samuel 11 begins: 'In the spring, at the time when kings go off to war... David remained in Jerusalem.' The fall begins with David being where he shouldn't be, doing nothing when he should have been leading.\n\nDavid sees Bathsheba, sends for her, sleeps with her, and when she becomes pregnant, arranges the murder of her husband Uriah — one of his most loyal soldiers. He uses his power to cover his sin.\n\nNathan the prophet confronts David with a parable (12:1–7). David condemns the man in the story — then Nathan says: 'You are the man.' Psalm 51 is David's prayer of repentance after this moment. God forgives David completely — but the consequences still come.",keyVerses:["2 Samuel 11:4 — David sent messengers to get her. She came to him, and he slept with her.","2 Samuel 12:7 — Then Nathan said to David, 'You are the man!'","2 Samuel 12:13 — Then David said, 'I have sinned against the LORD.' Nathan replied, 'The LORD has taken away your sin.'"],questions:["David's sin started with being in the wrong place at the wrong time. How do your circumstances set you up for temptation?","Nathan told a parable to confront David rather than accusing him directly. Who has God placed in your life to speak truth to you?","David was forgiven immediately but still faced consequences. What does that teach us about the nature of forgiveness and the nature of sin?"]},
+    {day:18,passage:"Psalm 22; 23; 51",title:"The Heart of the Psalms",focus:"Three of David's most important psalms: a prophecy of the cross, the most beloved psalm ever written, and the deepest prayer of repentance in Scripture.",teaching:"Psalm 22 is the most quoted psalm in the New Testament. Jesus cries its first line from the cross: 'My God, my God, why have you forsaken me?' Written 1,000 years before the crucifixion, it describes mocking crowds, bones out of joint, hands and feet pierced, clothes divided by lot. It is a prophetic window into Calvary.\n\nPsalm 23 is the most beloved poem in human history. 'The LORD is my shepherd' — a personal statement of trust. Notice the shift in verse 4: 'You are with me.' The psalm moves from talking about God to talking to God. In the valley of the shadow of death, theology becomes personal.\n\nPsalm 51 was written after Nathan confronted David. It is the gold standard of repentance: honest about sin, asking for deep inner transformation, not just forgiveness. 'Create in me a clean heart' — the word 'create' (bara) is only used of God.",keyVerses:["Psalm 22:1 — My God, my God, why have you forsaken me?","Psalm 23:4 — Even though I walk through the darkest valley, I will fear no evil, for you are with me.","Psalm 51:10 — Create in me a pure heart, O God, and renew a steadfast spirit within me."],questions:["Psalm 22 was written centuries before crucifixion existed as a practice. How does that prophecy strengthen your confidence in Scripture?","Psalm 23 shifts from 'He' to 'You' at the darkest point. When has God become most personal to you in your hardest moments?","David asked God to 'create' a clean heart — not just clean his existing heart. What is the difference, and what does that prayer mean for you?"]},
+    {day:19,passage:"1 Kings 18–19",title:"Elijah — Fire and the Still Small Voice",focus:"Elijah calls down fire on Mount Carmel in the greatest showdown in Israel's history. Then collapses in exhaustion and depression. God meets him tenderly.",teaching:"1 Kings 18: Elijah stands alone against 450 prophets of Baal on Mount Carmel. He is outnumbered 450 to 1. He taunts the false prophets then prays a simple, confident prayer — fire falls and consumes the sacrifice. The people fall on their faces: 'The LORD — he is God!'\n\n1 Kings 19: Immediately after the greatest victory of his ministry, Elijah runs in terror from Jezebel and collapses under a tree asking to die. Depression follows great victories.\n\nGod's response is remarkable: He doesn't rebuke Elijah or give him a sermon. He lets him sleep. He sends an angel with food and water. Then He speaks — not in the earthquake or fire or wind, but in a gentle whisper (19:12). God meets burnout with rest, food, and presence before He gives any new assignment.",keyVerses:["1 Kings 18:37 — Answer me, LORD, answer me, so these people will know that you, LORD, are God.","1 Kings 19:4 — I have had enough, LORD. Take my life.","1 Kings 19:12 — After the fire came a gentle whisper."],questions:["Elijah collapsed right after his greatest victory. How do you typically feel spiritually after a big high — and how do you prepare for the crash?","God's first response to Elijah's depression was food and sleep, not a sermon. What does that tell you about how God cares for His people?","God spoke in a whisper, not in the spectacular. Where in your life do you need to slow down enough to hear the gentle voice of God?"]},
+    {day:20,passage:"Isaiah 53",title:"The Suffering Servant",focus:"Written 700 years before Jesus, Isaiah 53 describes the crucifixion in such detail that it reads like an eyewitness account. The most important prophecy in the Old Testament.",teaching:"Isaiah 53 is the fourth of Isaiah's 'Servant Songs.' It describes a figure who suffers for the sins of others — voluntarily, silently, and effectively. The chapter is quoted more in the New Testament than almost any other OT passage.\n\nEvery verse points to the cross: 'pierced for our transgressions' (v.5), 'the LORD has laid on him the iniquity of us all' (v.6), 'he was led like a lamb to the slaughter' (v.7), 'assigned a grave with the wicked' but 'with the rich in his death' (v.9 — crucified between thieves, buried in a rich man's tomb).\n\nThe most important phrase is verse 5: 'by his wounds we are healed.' Peter quotes this in 1 Peter 2:24. The Hebrew word for 'wounds' refers to the welts from whipping. The physical suffering of Jesus became the means of our spiritual healing.",keyVerses:["Isaiah 53:3 — He was despised and rejected by mankind, a man of suffering, and familiar with pain.","Isaiah 53:5 — But he was pierced for our transgressions, he was crushed for our iniquities; the punishment that brought us peace was on him, and by his wounds we are healed.","Isaiah 53:6 — We all, like sheep, have gone astray; and the LORD has laid on him the iniquity of us all."],questions:["Read Isaiah 53 as if you didn't know it was about Jesus. Who does it sound like to you? What details strike you most?","'By his wounds we are healed' — what healing do you most need from God right now — physical, emotional, spiritual?","Isaiah wrote this 700 years before Jesus. How does this prophecy affect your confidence that Jesus is who He claimed to be?"]},
+    {day:21,passage:"Daniel 1–3; 6",title:"Daniel — Faithful in Babylon",focus:"Daniel and his friends refuse to compromise their faith in a pagan empire. They face a furnace and a lions' den — and God delivers them.",teaching:"Daniel 1: Daniel, Shadrach, Meshach, and Abednego are taken captive to Babylon. They are given new names and pressured to assimilate completely. But they resolve not to defile themselves. This is a declaration that their ultimate loyalty belongs to God, not Babylon.\n\nDaniel 3: The three friends refuse to bow to Nebuchadnezzar's gold statue. When threatened with the furnace, they say one of the boldest things in the Bible: 'Our God is able to save us... but even if he does not, we will not bow' (3:17–18). Faith that depends on God always coming through is not real faith — it is a transaction.\n\nDaniel 6: Daniel prays openly three times a day knowing it is now illegal. He is thrown into the lions' den. God closes the mouths of the lions.",keyVerses:["Daniel 1:8 — But Daniel resolved not to defile himself with the royal food and wine.","Daniel 3:17–18 — Our God is able to save us... but even if he does not, we want you to know that we will not serve your gods.","Daniel 6:10 — Three times a day he got down on his knees and prayed, giving thanks to his God, just as he had done before."],questions:["Daniel and his friends were faithful in small things (diet) before they were tested in big things (furnace, lions). What small acts of faithfulness is God asking of you right now?","'Even if he does not' — that is the deepest level of trust. Can you say that about something you've been praying for?","Daniel prayed despite the law making it illegal. What pressures in your world push you toward hiding your faith?"]},
+    {day:22,passage:"Nehemiah 1–2; 4; 6",title:"Rebuilding the Walls",focus:"Nehemiah hears Jerusalem's walls are broken and weeps. Then he prays, plans, and leads the rebuilding — facing mockery and opposition at every step.",teaching:"Nehemiah 1: Nehemiah is the cupbearer to the Persian king — a position of significant privilege. When he hears about Jerusalem's devastation, he sits down and weeps, mourns, fasts, and prays for days. Great leaders are moved before they move.\n\nNehemiah 2: He prays 'a quick prayer' (2:4) before answering the king — then presents a detailed, prepared plan. The combination of prayer and preparation is a model for all leadership.\n\nNehemiah 4 and 6: The opposition is relentless — mockery, physical threats, and a personal smear campaign. Nehemiah's response to mockery: he prays and keeps building. His response to the smear: 'I am carrying on a great project and cannot go down.' He finishes the wall in 52 days.",keyVerses:["Nehemiah 1:4 — When I heard these things, I sat down and wept. For some days I mourned and fasted and prayed.","Nehemiah 2:4–5 — Then I prayed to the God of heaven, and I answered the king.","Nehemiah 6:3 — I am carrying on a great project and cannot go down."],questions:["Nehemiah wept before he worked. What burdens are you carrying right now that you haven't yet brought to God in prayer?","He combined prayer and careful planning. How do you balance prayer and practical action?","When people mocked and threatened the work, Nehemiah prayed and kept building. What opposition are you facing right now that you need to refuse to 'go down' from?"]},
+    {day:23,passage:"Malachi 1–4",title:"The Last Prophet Before 400 Years of Silence",focus:"Malachi is the last book of the Old Testament. God confronts Israel's half-hearted worship — then promises a coming messenger and the return of Elijah.",teaching:"Malachi was written around 450 BC. After Malachi, God goes silent for 400 years — no prophets, no new Scripture — until John the Baptist appears in the wilderness.\n\nMalachi 1: God opens with 'I have loved you' — and Israel responds 'How have you loved us?' Their worship has become stale: offering blind and lame animals instead of their best. God asks: 'If I am a father, where is the honor due me?' (1:6). Half-hearted worship is an insult, not an offering.\n\nMalachi 3–4: God promises a messenger who will prepare the way (John the Baptist — fulfilled in Matthew 3). The book closes with a promise: Elijah will come before the great day of the LORD. Jesus identifies John the Baptist as this Elijah figure (Matthew 11:14). The entire OT ends leaning forward toward Jesus.",keyVerses:["Malachi 1:6 — A son honors his father, and a slave his master. If I am a father, where is the honor due me?","Malachi 3:1 — I will send my messenger, who will prepare the way before me.","Malachi 3:7 — Return to me, and I will return to you, says the LORD Almighty."],questions:["Israel brought their worst animals to God. In what areas of your life are you giving God your leftovers rather than your best?","'Return to me and I will return to you' — is there an area of your life where you have drifted from God and need to return?","The OT ends with a promise and a 400-year silence. How do you stay faithful to God during seasons when He seems silent?"]},
+    {day:24,passage:"Luke 2:1–20; Matthew 2",title:"The Birth of Jesus — Into the Silence",focus:"After 400 years of prophetic silence, God speaks — not from a throne, but from a manger. The long-awaited Messiah arrives in the most unexpected way.",teaching:"400 years of silence — then an angel appears to an elderly priest. Then to a teenage girl in Nazareth. Then to shepherds in a field at night. God breaks the silence not to emperors or religious leaders, but to the overlooked and humble.\n\nLuke 2: The manger is not a cozy Christmas card scene. It was an animal feeding trough. Joseph and Mary could not find a room — the King of the universe was born in a stable because there was no place for Him. John 1:11 says it all: 'He came to his own, and his own did not receive him.'\n\nThe angels appear to shepherds — considered untrustworthy in Jewish society. Yet they are the first evangelists: after seeing Jesus, they 'spread the word' (Luke 2:17).",keyVerses:["Luke 2:7 — She wrapped him in cloths and placed him in a manger, because there was no guest room available.","Luke 2:10–11 — Do not be afraid. I bring you good news that will cause great joy for all the people. Today a Savior has been born to you.","Matthew 2:11 — On coming to the house, they saw the child with his mother Mary, and they bowed down and worshiped him."],questions:["After 400 years of silence, why do you think God chose to speak first to shepherds rather than kings or priests?","The King of the universe had no room at the inn. In what ways do we still sometimes have no room for Jesus in our lives?","The Magi traveled hundreds of miles to worship. What would it look like for you to be that intentional in seeking Jesus?"]},
+    {day:25,passage:"John 1:1–18; Mark 1:1–20",title:"The Ministry of Jesus Begins",focus:"John establishes who Jesus is — eternal God made flesh. Mark launches immediately into action. Jesus calls His first disciples.",teaching:"John 1:1–18 is the theological foundation for everything that follows in Jesus' ministry. Before any miracle, before any sermon, John establishes: Jesus is God (v.1), He is the agent of all creation (v.3), He is the light of the world (v.4), and He became human (v.14).\n\nMark 1 has a different feel — immediate, urgent, action-packed. Mark uses 'immediately' (euthus) 11 times in the first chapter alone. Jesus is baptized, tempted, and begins His ministry — all in the first 13 verses.\n\nThe calling of the disciples (Mark 1:16–20): Jesus walks by fishermen and says 'Follow me.' They leave their nets immediately. No theological argument, no lengthy discussion — just an invitation and a response.",keyVerses:["John 1:14 — The Word became flesh and made his dwelling among us.","Mark 1:15 — The kingdom of God has come near. Repent and believe the good news.","Mark 1:17 — Come, follow me, and I will send you out to fish for people."],questions:["John establishes who Jesus is before what He does. How does knowing Jesus is God change how you read the rest of the Gospels?","The disciples left their nets immediately. What would you need to leave behind to follow Jesus more fully?","Jesus said 'the kingdom of God has come near.' What does it mean for the kingdom to be present in your life today?"]},
+    {day:26,passage:"Acts 1–2",title:"Pentecost — The Church Is Born",focus:"Jesus ascends. The disciples wait. Then the Holy Spirit falls like fire — and 3,000 people are saved in one day. The church begins.",teaching:"Acts 1: Jesus gives His final instructions: wait in Jerusalem for the Holy Spirit, then be witnesses 'to the ends of the earth.' He ascends — the disciples stare at the sky. Two angels appear: 'Why do you stand here looking into the sky?' There is work to do.\n\nActs 2: Pentecost. The Holy Spirit comes like a rushing wind and tongues of fire. Every person present hears in their own language — a deliberate reversal of Babel (Genesis 11), where God confused languages. Now God unifies them.\n\nPeter's sermon (Acts 2:14–41) is the first Christian sermon. He preaches from the OT, declares Jesus' resurrection, and calls for repentance. 3,000 people are baptized. The church is born not through a program or a strategy, but through the Holy Spirit and the preaching of the Word.",keyVerses:["Acts 1:8 — You will receive power when the Holy Spirit comes on you; and you will be my witnesses... to the ends of the earth.","Acts 2:4 — All of them were filled with the Holy Spirit and began to speak in other tongues.","Acts 2:41 — Those who accepted his message were baptized, and about three thousand were added to their number that day."],questions:["Jesus told them to wait before they worked. How comfortable are you with waiting on God before acting?","Pentecost reversed Babel — instead of dividing languages, God used them to unite people around Jesus. What does that tell you about the global scope of the gospel?","3,000 people were saved after one sermon. Are you praying with that kind of expectation for people in your life who don't know Jesus?"]},
+    {day:27,passage:"Romans 8",title:"No Condemnation — Nothing Can Separate Us",focus:"The most triumphant chapter in the Bible. No condemnation. Life in the Spirit. All things work for good. Nothing can separate us from God's love.",teaching:"Romans 8 begins with 'no condemnation' and ends with 'nothing can separate us' — a chapter of total security for those who are in Christ.\n\nThe Holy Spirit is mentioned 20 times in Romans 8 — more than almost any other chapter in the Bible. The Christian life is not about willpower — it is about walking by the Spirit (8:4).\n\nVerse 28 is often quoted in isolation. Read the context: it is not a promise that everything feels good, but that God is working even suffering toward a specific goal — conforming us to the image of Jesus (v.29). Your hardship has a purpose.\n\nVerses 38–39 form a complete list of everything that could possibly separate us from God. Paul exhausts the categories. Then: nothing. Can. Separate. You.",keyVerses:["Romans 8:1 — There is now no condemnation for those who are in Christ Jesus.","Romans 8:28 — In all things God works for the good of those who love him.","Romans 8:38–39 — Neither death nor life... neither height nor depth... will be able to separate us from the love of God."],questions:["What does 'no condemnation' mean practically for how you feel when you fail?","Romans 8:28 says God works suffering for good — not that suffering is good. How does that distinction help you right now?","Paul runs out of categories trying to describe what cannot separate you from God's love. What does that security mean to you personally?"]},
+    {day:28,passage:"Revelation 21–22",title:"All Things New — The End of the Story",focus:"The Bible ends where it began — God with His people, with no more sin, suffering, or death. Everything God started in Genesis is finished and perfected.",teaching:"Revelation 21–22 is the final chapter of the entire biblical story. It answers the question that Genesis 3 raised: can the broken relationship between God and humanity be fully and permanently restored? The answer is yes.\n\nRevelation 21:3–4: 'God's dwelling place is now among the people, and he will dwell with them.' The word 'dwell' is the same as in John 1:14 — tabernacle. God was with Israel in a tent. God came in Jesus as a human. Now God dwells permanently with His people forever.\n\nThe New Jerusalem is described as a garden-city: the river of life, the tree of life (last seen in Genesis 3). The curse of Genesis 3 is completely reversed. What was lost is more than restored — it is glorified.\n\nThe Bible's last words: 'Come, Lord Jesus.' The right response to everything we have read is longing.",keyVerses:["Revelation 21:3–4 — God's dwelling place is now among the people... He will wipe every tear from their eyes. There will be no more death or mourning or crying or pain.","Revelation 21:5 — He who was seated on the throne said, 'I am making everything new!'","Revelation 22:20 — He who testifies to these things says, 'Yes, I am coming soon.' Amen. Come, Lord Jesus."],questions:["The Bible begins and ends with God dwelling with His people. What does that tell you about what God has always wanted?","'He will wipe every tear from their eyes.' What tears in your life are you most looking forward to God wiping away?","Having read from creation to new creation in this chronological plan, how has your understanding of the Bible as one unified story changed?"]}
+  ]
+};
+
+// ── Storage ────────────────────────────────────────────────────────────────
+function getData() {
+  try { return JSON.parse(localStorage.getItem(PLAN.storageKey) || '{}'); } catch(e) { return {}; }
+}
+function saveData(d) {
+  try { localStorage.setItem(PLAN.storageKey, JSON.stringify(d)); } catch(e) {}
+}
+
+function syncCalendar(isDone) {
+  var CAL_KEY = 'bsh-calendar-v1';
+  var calId = 'chron';
+  try {
+    var cal = JSON.parse(localStorage.getItem(CAL_KEY) || '{}');
+    var t = new Date();
+    var iso = t.getFullYear() + '-' + (t.getMonth()+1<10?'0':'') + (t.getMonth()+1) + '-' + (t.getDate()<10?'0':'') + t.getDate();
+    if (!cal[iso]) cal[iso] = [];
+    var idx = cal[iso].indexOf(calId);
+    if (isDone && idx === -1) cal[iso].push(calId);
+    if (!isDone && idx !== -1) cal[iso].splice(idx, 1);
+    if (!cal[iso].length) delete cal[iso];
+    localStorage.setItem(CAL_KEY, JSON.stringify(cal));
+  } catch(e) {}
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+var currentDayIdx = 0;
+var confirmingDelete = null;
+
+// ── Views ──────────────────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function showList()    { renderList(); showView('viewList'); }
+function showHistory() { renderHistory(); showView('viewHistory'); }
+function showDay(idx)  { currentDayIdx = idx; renderDay(); showView('viewDay'); }
+
+// ── Render list ────────────────────────────────────────────────────────────
+function renderList() {
+  var data = getData();
+  var completed = data.completed || {};
+  var notes = data.notes || {};
+  var doneCount = Object.keys(completed).filter(function(k) { return completed[k]; }).length;
+  var total = PLAN.days.length;
+  var pct = Math.round(doneCount / total * 100);
+
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = doneCount + ' / ' + total + ' days completed';
+
+  var totalNotes = Object.values(notes).reduce(function(s, a) { return s + (a ? a.length : 0); }, 0);
+  document.getElementById('notesCount').textContent = totalNotes + ' note' + (totalNotes !== 1 ? 's' : '') + ' \u203a';
+
+  var html = '';
+  PLAN.days.forEach(function(day, i) {
+    var done = !!completed[i];
+    var dayNotes = notes[i] || [];
+    html += '<div class="day-item' + (done ? ' done' : '') + '" onclick="showDay(' + i + ')">'
+      + '<div class="check-circle" onclick="event.stopPropagation();quickToggle(' + i + ')">' + (done ? '✓' : '') + '</div>'
+      + '<div class="day-info">'
+      + '<div class="day-num">Day ' + day.day + '</div>'
+      + '<div class="day-passage">' + day.passage + '</div>'
+      + '<div class="day-title">' + day.title + '</div>'
+      + '</div>'
+      + (dayNotes.length ? '<div class="note-badge">' + dayNotes.length + ' note' + (dayNotes.length > 1 ? 's' : '') + '</div>' : '')
+      + '</div>';
+  });
+  document.getElementById('dayList').innerHTML = html;
+}
+
+function quickToggle(idx) {
+  var data = getData();
+  if (!data.completed) data.completed = {};
+  data.completed[idx] = !data.completed[idx];
+  saveData(data);
+  syncCalendar(data.completed[idx]);
+  renderList();
+}
+
+// ── Render day ─────────────────────────────────────────────────────────────
+function renderDay() {
+  var data = getData();
+  var completed = data.completed || {};
+  var day = PLAN.days[currentDayIdx];
+  var done = !!completed[currentDayIdx];
+
+  document.getElementById('dayMeta').textContent = 'Day ' + day.day + ' of ' + PLAN.days.length;
+  document.getElementById('dayTitle').textContent = day.title;
+  document.getElementById('dayPassage').textContent = day.passage;
+  document.getElementById('dayFocus').textContent = day.focus;
+
+  var btn = document.getElementById('doneBtn');
+  btn.textContent = done ? '✓ Done' : 'Mark Done';
+  btn.className = 'done-btn' + (done ? ' is-done' : '');
+
+  document.getElementById('dayTeaching').innerHTML = day.teaching.split('\n\n').map(function(p) {
+    return '<div class="teaching-para">' + p + '</div>';
+  }).join('');
+
+  document.getElementById('dayVerses').innerHTML = day.keyVerses.map(function(v) {
+    return '<div class="verse-item">' + v + '</div>';
+  }).join('');
+
+  document.getElementById('dayQuestions').innerHTML = day.questions.map(function(q, i) {
+    return '<div class="question-item"><div class="q-num">' + (i+1) + '</div><div class="q-text">' + q + '</div></div>';
+  }).join('');
+
+  renderNotes();
+
+  document.getElementById('prevBtn').style.display = currentDayIdx > 0 ? 'block' : 'none';
+  document.getElementById('nextBtn').style.display = currentDayIdx < PLAN.days.length - 1 ? 'block' : 'none';
+
+  document.getElementById('aiResult').innerHTML = '<div class="ai-placeholder">Tap "Get Insight" for cross-references, historical context & extra commentary.</div>';
+  var aiBtn = document.getElementById('aiBtn');
+  aiBtn.disabled = false;
+  aiBtn.textContent = 'Get Insight';
+  aiBtn.style.display = 'inline-block';
+
+  document.getElementById('noteInput').value = '';
+  confirmingDelete = null;
+}
+
+function renderNotes() {
+  var data = getData();
+  var dayNotes = (data.notes || {})[currentDayIdx] || [];
+  var html = '';
+  dayNotes.forEach(function(n, ni) {
+    html += '<div class="note-entry">'
+      + '<div class="note-text">' + escHtml(n.text) + '</div>'
+      + '<div class="note-meta"><span>' + n.date + '</span>'
+      + '<button class="note-delete" onclick="askDelete(' + ni + ')">🗑</button></div>'
+      + (confirmingDelete === ni
+        ? '<div class="confirm-delete"><span>Delete this note?</span>'
+          + '<button class="confirm-yes" onclick="doDelete(' + ni + ')">Delete</button>'
+          + '<button class="confirm-no" onclick="cancelDelete()">Cancel</button></div>'
+        : '')
+      + '</div>';
+  });
+  document.getElementById('notesList').innerHTML = html;
+}
+
+function askDelete(ni)   { confirmingDelete = ni; renderNotes(); }
+function cancelDelete()  { confirmingDelete = null; renderNotes(); }
+function doDelete(ni) {
+  var data = getData();
+  if (!data.notes) data.notes = {};
+  if (!data.notes[currentDayIdx]) data.notes[currentDayIdx] = [];
+  data.notes[currentDayIdx].splice(ni, 1);
+  saveData(data);
+  confirmingDelete = null;
+  renderNotes();
+}
+
+function saveNote() {
+  var text = document.getElementById('noteInput').value.trim();
+  if (!text) return;
+  var data = getData();
+  if (!data.notes) data.notes = {};
+  if (!data.notes[currentDayIdx]) data.notes[currentDayIdx] = [];
+  data.notes[currentDayIdx].push({ text: text, date: new Date().toLocaleString() });
+  saveData(data);
+  document.getElementById('noteInput').value = '';
+  confirmingDelete = null;
+  renderNotes();
+}
+
+function toggleDone() {
+  var data = getData();
+  if (!data.completed) data.completed = {};
+  data.completed[currentDayIdx] = !data.completed[currentDayIdx];
+  saveData(data);
+  syncCalendar(data.completed[currentDayIdx]);
+  renderDay();
+}
+
+function navDay(dir) {
+  currentDayIdx += dir;
+  renderDay();
+  window.scrollTo(0, 0);
+}
+
+// ── History ────────────────────────────────────────────────────────────────
+function renderHistory() {
+  var data = getData();
+  var notes = data.notes || {};
+  var all = [];
+  Object.keys(notes).forEach(function(idx) {
+    (notes[idx] || []).forEach(function(n, ni) {
+      all.push({ idx: parseInt(idx), ni: ni, note: n });
+    });
+  });
+  all.sort(function(a, b) { return new Date(b.note.date) - new Date(a.note.date); });
+
+  document.getElementById('historySubtitle').textContent = all.length + ' note' + (all.length !== 1 ? 's' : '') + ' across ' + PLAN.name;
+
+  if (!all.length) {
+    document.getElementById('historyList').innerHTML = '<div class="empty-state"><div class="e-icon">✍️</div><p>No notes yet.</p><p style="margin-top:6px;">Go into any day and save a note — it will appear here.</p></div>';
+    return;
+  }
+
+  document.getElementById('historyList').innerHTML = all.map(function(item) {
+    var day = PLAN.days[item.idx];
+    return '<div class="history-entry">'
+      + '<div class="history-day-link" onclick="showDay(' + item.idx + ')">Day ' + day.day + ' · ' + day.passage + ' — ' + day.title + ' \u203a</div>'
+      + '<div class="history-note-text">' + escHtml(item.note.text) + '</div>'
+      + '<div class="history-note-date">' + item.note.date + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ── AI Insight ─────────────────────────────────────────────────────────────
+function getInsight() {
+  var day = PLAN.days[currentDayIdx];
+  var btn = document.getElementById('aiBtn');
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  document.getElementById('aiResult').innerHTML = '<div class="ai-placeholder">Thinking...</div>';
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: 'You are a warm Bible teacher. The student is studying ' + day.passage + ' — "' + day.title + '" in a chronological Bible reading plan. Give 3–4 sentences of deeper insight: a cross-reference to another Scripture, a cultural or historical detail, and one personal application. Rich but accessible.' }]
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var text = (d.content && d.content[0] && d.content[0].text) || 'Could not load insight.';
+    document.getElementById('aiResult').innerHTML = '<div class="ai-result">' + escHtml(text) + '</div>';
+    btn.style.display = 'none';
+  })
+  .catch(function() {
+    document.getElementById('aiResult').innerHTML = '<div class="ai-placeholder">Could not load. Please try again.</div>';
+    btn.disabled = false;
+    btn.textContent = 'Try Again';
+  });
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+renderList();
+</script>
+</body>
+</html>
